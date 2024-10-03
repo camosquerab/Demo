@@ -67,4 +67,7 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
+    public Key getKey() {
+        return key;
+    }
 }
