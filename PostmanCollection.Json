@@ -1,0 +1,152 @@
+{
+  "info": {
+    "_postman_id": "e1234567-89ab-4cde-fghi-1234567890jk",
+    "name": "Demo API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/register",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "register"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"testpass\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Login User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"testpass\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Create Category",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/Category/",
+          "host": ["{{base_url}}"],
+          "path": ["Category", ""]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"categoryName\": \"SERVIDORES\",\n    \"description\": \"Category description\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List Categories",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/Category/",
+          "host": ["{{base_url}}"],
+          "path": ["Category", ""]
+        }
+      }
+    },
+    {
+      "name": "Create Product",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/Product/",
+          "host": ["{{base_url}}"],
+          "path": ["Product", ""]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"productName\": \"AWS EC2\",\n    \"supplierID\": 1,\n    \"categoryID\": 1,\n    \"quantityPerUnit\": \"1\",\n    \"unitPrice\": 100,\n    \"unitsInStock\": 10,\n    \"unitsOnOrder\": 5,\n    \"reorderLevel\": 1,\n    \"discontinued\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "List Products",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/Products/",
+          "host": ["{{base_url}}"],
+          "path": ["Products", ""]
+        }
+      }
+    },
+    {
+      "name": "Get Product by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/Products/1/",
+          "host": ["{{base_url}}"],
+          "path": ["Products", "1", ""]
+        }
+      }
+    }
+  ]
+}
