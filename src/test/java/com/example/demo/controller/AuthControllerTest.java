@@ -17,10 +17,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class AuthControllerTest {
@@ -46,59 +48,74 @@ class AuthControllerTest {
     }
 
     @Test
-    void testLogin_Success() {
+    void testLoginSuccess() {
         AuthRequest request = new AuthRequest();
         request.setUsername("testuser");
-        request.setPassword("testpass");
+        request.setPassword("password");
 
         User user = new User();
         user.setUsername("testuser");
 
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
         when(userService.findByUsername("testuser")).thenReturn(Optional.of(user));
-        when(jwtUtil.generateToken(user)).thenReturn("token");
+        when(jwtUtil.generateToken(user)).thenReturn("test-token");
 
         ResponseEntity<AuthResponse> response = authController.login(request);
 
+        assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("token", response.getBody().getToken());
+        assertEquals("test-token", response.getBody().getToken());
     }
 
     @Test
-    void testLogin_Failure_BadCredentials() {
+    void testLoginFailure() {
         AuthRequest request = new AuthRequest();
         request.setUsername("testuser");
-        request.setPassword("wrongpass");
+        request.setPassword("wrongpassword");
 
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenThrow(new BadCredentialsException("Credenciales incorrectas"));
+        doThrow(new BadCredentialsException("Credenciales incorrectas"))
+                .when(authenticationManager)
+                .authenticate(any(UsernamePasswordAuthenticationToken.class));
 
-        try {
+        BadCredentialsException thrown = assertThrows(BadCredentialsException.class, () -> {
             authController.login(request);
-        } catch (BadCredentialsException ex) {
-            assertEquals("Credenciales incorrectas", ex.getMessage());
-        }
+        });
+
+        assertEquals("Credenciales incorrectas", thrown.getMessage());
     }
 
     @Test
-    void testRegister_Success() {
+    void testRegisterSuccess() {
         AuthRequest request = new AuthRequest();
-        request.setUsername("testuser");
-        request.setPassword("testpass");
+        request.setUsername("newuser");
+        request.setPassword("password");
 
         Role role = new Role();
         role.setName("ROLE_USER");
 
         User user = new User();
-        user.setUsername("testuser");
+        user.setUsername("newuser");
 
         when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.of(role));
-        when(userService.registerUser("testuser", "testpass", role)).thenReturn(user);
-        when(jwtUtil.generateToken(user)).thenReturn("token");
+        when(userService.registerUser("newuser", "password", role)).thenReturn(user);
+        when(jwtUtil.generateToken(user)).thenReturn("new-token");
 
         ResponseEntity<AuthResponse> response = authController.register(request);
 
+        assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("token", response.getBody().getToken());
+        assertEquals("new-token", response.getBody().getToken());
+    }
+
+    @Test
+    void testRegisterRoleNotFound() {
+        AuthRequest request = new AuthRequest();
+        request.setUsername("newuser");
+        request.setPassword("password");
+        when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.empty());
+        ResponseStatusException thrown = assertThrows(ResponseStatusException.class, () -> {
+            authController.register(request);
+        });
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, thrown.getStatusCode());
+        assertEquals("No se encontró el rol USER", thrown.getReason());
     }
 }

@@ -9,7 +9,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockMultipartFile;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,53 +32,39 @@ class CategoryControllerTest {
     }
 
     @Test
-    void testCreateCategory_Success() {
+    void testCreateCategory() throws IOException {
         CategoryDTO categoryDTO = new CategoryDTO();
-        categoryDTO.setCategoryName("SERVIDORES");
-        categoryDTO.setDescription("Descripción de la categoría");
-        categoryDTO.setPicture(new byte[]{});
+        MockMultipartFile file = new MockMultipartFile("file", "test.jpg", "image/jpeg", new byte[0]);
+        categoryDTO.setPicture(file);
 
         Category category = new Category();
-        category.setCategoryName("SERVIDORES");
-
-        when(categoryService.createCategory(any(Category.class))).thenReturn(category);
+        when(categoryService.createCategory(categoryDTO)).thenReturn(category);
 
         ResponseEntity<Category> response = categoryController.createCategory(categoryDTO);
 
-        assertEquals("SERVIDORES", response.getBody().getCategoryName());
-        verify(categoryService, times(1)).createCategory(any(Category.class));
+        assertEquals(200, response.getStatusCodeValue());
+        assertNotNull(response.getBody());
+        verify(categoryService, times(1)).createCategory(any(CategoryDTO.class));
     }
 
     @Test
-    void testCreateCategory_Failure() {
-        // Datos de entrada
+    void testCreateCategoryThrowsIOException() throws IOException {
         CategoryDTO categoryDTO = new CategoryDTO();
-        categoryDTO.setCategoryName("SERVIDORES");
-        categoryDTO.setDescription("Descripción de la categoría");
+        when(categoryService.createCategory(categoryDTO)).thenThrow(new IOException("Error"));
 
-        // Simulación de excepción
-        when(categoryService.createCategory(any(Category.class))).thenThrow(new RuntimeException("Error creando la categoría"));
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> categoryController.createCategory(categoryDTO));
 
-        // Ejecución del método del controlador con verificación de excepción
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            categoryController.createCategory(categoryDTO);
-        });
-
-        assertEquals("Error creando la categoría", exception.getMessage());
+        assertEquals("Error saving the image", exception.getMessage());
     }
 
     @Test
-    void testListCategories_Success() {
-        Category category1 = new Category();
-        category1.setCategoryName("SERVIDORES");
-
-        Category category2 = new Category();
-        category2.setCategoryName("CLOUD");
-
-        when(categoryService.listCategories()).thenReturn(List.of(category1, category2));
+    void testListCategories() {
+        List<Category> categories = Arrays.asList(new Category(), new Category());
+        when(categoryService.listCategories()).thenReturn(categories);
 
         ResponseEntity<List<Category>> response = categoryController.listCategories();
 
+        assertEquals(200, response.getStatusCodeValue());
         assertEquals(2, response.getBody().size());
         verify(categoryService, times(1)).listCategories();
     }

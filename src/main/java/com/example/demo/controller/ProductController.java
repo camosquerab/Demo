@@ -3,15 +3,19 @@ package com.example.demo.controller;
 import com.example.demo.dto.ProductDTO;
 import com.example.demo.entity.Product;
 import com.example.demo.service.ProductService;
+import jdk.jfr.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
-@RestController
+@Controller
 @RequestMapping("/product")
 public class ProductController {
 
@@ -19,32 +23,47 @@ public class ProductController {
     private ProductService productService;
 
     @PostMapping("/")
+    @ResponseBody
     public ResponseEntity<Product> createProduct(@RequestBody ProductDTO productDTO) {
         try {
-            Product product = new Product();
-            product.setProductName(productDTO.getProductName());
-            product.setSupplierID(productDTO.getSupplierID());
-            product.setQuantityPerUnit(productDTO.getQuantityPerUnit());
-            product.setUnitPrice(productDTO.getUnitPrice());
-            product.setUnitsInStock(productDTO.getUnitsInStock());
-            product.setUnitsOnOrder(productDTO.getUnitsOnOrder());
-            product.setReorderLevel(productDTO.getReorderLevel());
-            product.setDiscontinued(productDTO.getDiscontinued());
-            return ResponseEntity.ok(productService.createProduct(product, productDTO.getCategoryID()));
+            Product createdProduct = productService.createProduct(productDTO);
+            return ResponseEntity.ok(createdProduct);
         } catch (Exception ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error creando el producto", ex);
         }
     }
 
     @GetMapping("/products/")
+    @ResponseBody
     public ResponseEntity<List<Product>> listProducts() {
         return ResponseEntity.ok(productService.listProducts());
     }
 
-    @GetMapping("/products/{id}/")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+    @GetMapping("/productss/{id}/")
+    @ResponseBody
+    public ResponseEntity<Product> getProductById1(@PathVariable Long id) {
         return productService.getProductById(id)
                 .map(ResponseEntity::ok)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+    }
+
+    @GetMapping("/products/{id}/")
+    public String getProductById(@PathVariable Long id, Model model) {
+        try {
+            Optional<Product> optionalProduct = productService.getProductById(id);
+            if (optionalProduct.isPresent()) {
+                Product product = optionalProduct.get(); // Extrae el valor del Optional
+                String imagePath = product.getCategory()
+                        .getPicturePath()
+                        .replace("/app/images/", "/Users/camilomosquerabenavides/Downloads/intcomex/");
+                product.getCategory().setPicturePath(imagePath);
+                model.addAttribute("product", product);
+                return "productDetail";
+            } else {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado");
+            }
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado", ex);
+        }
     }
 }

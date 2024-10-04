@@ -1,10 +1,12 @@
 package com.example.demo.dto;
 
 
+import org.springframework.web.multipart.MultipartFile;
+
 public class CategoryDTO {
     private String categoryName;
     private String description;
-    private byte[] picture;
+    private MultipartFile picture;
 
     // Getters and Setters
 
@@ -24,11 +26,11 @@ public class CategoryDTO {
         this.description = description;
     }
 
-    public byte[] getPicture() {
+    public MultipartFile getPicture() {
         return picture;
     }
 
-    public void setPicture(byte[] picture) {
+    public void setPicture(MultipartFile picture) {
         this.picture = picture;
     }
 }

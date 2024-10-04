@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -24,9 +23,6 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private RoleRepository roleRepository;
-
-    @Mock
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
@@ -38,44 +34,66 @@ class UserServiceTest {
     }
 
     @Test
-    void testRegisterUser_Success() {
-        String username = "testuser";
-        String password = "testpass";
+    void testRegisterUser() {
+        String rawPassword = "password";
+        String encodedPassword = "encoded-password";
+
         Role role = new Role();
         role.setName("ROLE_USER");
 
         User user = new User();
-        user.setUsername(username);
+        user.setUsername("newuser");
 
-        when(passwordEncoder.encode(password)).thenReturn("encodedPassword");
+        when(passwordEncoder.encode(rawPassword)).thenReturn(encodedPassword);
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        User registeredUser = userService.registerUser(username, password, role);
+        User registeredUser = userService.registerUser("newuser", rawPassword, role);
 
-        assertEquals(username, registeredUser.getUsername());
-        verify(userRepository, times(1)).save(any(User.class));
+        assertNotNull(registeredUser);
+        assertEquals("newuser", registeredUser.getUsername());
+        assertEquals(encodedPassword, registeredUser.getPassword());
+        assertEquals(role, registeredUser.getRole());
     }
 
     @Test
-    void testFindByUsername_Success() {
-        String username = "testuser";
+    void testFindByUsername() {
         User user = new User();
-        user.setUsername(username);
+        user.setUsername("existinguser");
 
-        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername("existinguser")).thenReturn(Optional.of(user));
 
-        Optional<User> foundUser = userService.findByUsername(username);
+        Optional<User> foundUser = userService.findByUsername("existinguser");
 
         assertTrue(foundUser.isPresent());
-        assertEquals(username, foundUser.get().getUsername());
+        assertEquals("existinguser", foundUser.get().getUsername());
+    }
+
+    @Test
+    void testLoadUserByUsername_UserFound() {
+        User user = new User();
+        user.setUsername("existinguser");
+        Role role = new Role();
+        role.setName("ROLE_USER");
+        user.setRole(role);
+
+        when(userRepository.findByUsername("existinguser")).thenReturn(Optional.of(user));
+
+        var userDetails = userService.loadUserByUsername("existinguser");
+
+        assertNotNull(userDetails);
+        assertEquals("existinguser", userDetails.getUsername());
+        assertEquals(1, userDetails.getAuthorities().size());
+        assertEquals("ROLE_USER", userDetails.getAuthorities().iterator().next().getAuthority());
     }
 
     @Test
     void testLoadUserByUsername_UserNotFound() {
-        when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("nonexistentuser")).thenReturn(Optional.empty());
 
-        assertThrows(UsernameNotFoundException.class, () -> {
-            userService.loadUserByUsername("nonexistent");
+        UsernameNotFoundException thrown = assertThrows(UsernameNotFoundException.class, () -> {
+            userService.loadUserByUsername("nonexistentuser");
         });
+
+        assertEquals("User not found with username: nonexistentuser", thrown.getMessage());
     }
 }

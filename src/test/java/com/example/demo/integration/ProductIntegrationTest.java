@@ -1,3 +1,4 @@
+package com.example.demo.integration;
 
 import com.example.demo.entity.Category;
 import com.example.demo.entity.Product;
@@ -15,7 +16,7 @@ import java.util.List;
 
 @SpringBootTest
 @Transactional
-public class IntegrationTest {
+public class ProductIntegrationTest {
 
     @Autowired
     private CategoryRepository categoryRepository;

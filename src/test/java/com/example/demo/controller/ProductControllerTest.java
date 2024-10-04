@@ -5,85 +5,84 @@ import com.example.demo.entity.Product;
 import com.example.demo.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.server.ResponseStatusException;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Arrays;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class ProductControllerTest {
+@WebMvcTest(ProductController.class)
+public class ProductControllerTest {
 
-    @Mock
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
     private ProductService productService;
 
-    @InjectMocks
-    private ProductController productController;
+    private Product product;
+    private ProductDTO productDTO;
 
     @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
-
-    @Test
-    void testCreateProduct_Success() {
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setProductName("AWS EC2");
+    public void setUp() {
+        productDTO = new ProductDTO();
+        productDTO.setProductName("Test Product");
+        productDTO.setSupplierID(1L);
         productDTO.setCategoryID(1L);
+        productDTO.setUnitPrice(100.0);
 
-        Product product = new Product();
-        product.setProductName("AWS EC2");
-
-        when(productService.createProduct(any(Product.class), eq(1L))).thenReturn(product);
-
-        ResponseEntity<Product> response = productController.createProduct(productDTO);
-
-        assertEquals("AWS EC2", response.getBody().getProductName());
-        verify(productService, times(1)).createProduct(any(Product.class), eq(1L));
+        product = new Product();
+        product.setProductID(1L);
+        product.setProductName("Test Product");
     }
 
     @Test
-    void testGetProductById_Success() {
-        Product product = new Product();
-        product.setProductName("AWS EC2");
+    public void testCreateProductSuccess() throws Exception {
+        when(productService.createProduct(any(ProductDTO.class))).thenReturn(product);
 
+        mockMvc.perform(post("/product/")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"productName\":\"Test Product\", \"supplierID\":1, \"categoryID\":1, \"unitPrice\":100.0}")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.productName").value("Test Product"));
+    }
+
+    @Test
+    public void testListProducts() throws Exception {
+        List<Product> productList = Arrays.asList(product);
+        when(productService.listProducts()).thenReturn(productList);
+
+        mockMvc.perform(get("/product/products/"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].productName").value("Test Product"));
+    }
+
+    @Test
+    public void testGetProductByIdSuccess() throws Exception {
         when(productService.getProductById(1L)).thenReturn(Optional.of(product));
 
-        ResponseEntity<Product> response = productController.getProductById(1L);
-
-        assertEquals("AWS EC2", response.getBody().getProductName());
-        verify(productService, times(1)).getProductById(1L);
+        mockMvc.perform(get("/product/productss/1/"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.productName").value("Test Product"));
     }
 
     @Test
-    void testGetProductById_NotFound() {
+    public void testGetProductByIdNotFound() throws Exception {
         when(productService.getProductById(1L)).thenReturn(Optional.empty());
 
-        try {
-            productController.getProductById(1L);
-        } catch (ResponseStatusException ex) {
-            assertEquals("404 NOT_FOUND \"Producto no encontrado\"", ex.getMessage());
-        }
-    }
-
-    @Test
-    void testListProducts_Success() {
-        Product product1 = new Product();
-        product1.setProductName("AWS EC2");
-
-        Product product2 = new Product();
-        product2.setProductName("Azure VM");
-
-        when(productService.listProducts()).thenReturn(List.of(product1, product2));
-
-        ResponseEntity<List<Product>> response = productController.listProducts();
-
-        assertEquals(2, response.getBody().size());
-        verify(productService, times(1)).listProducts();
+        mockMvc.perform(get("/product/productss/1/"))
+                .andExpect(status().isNotFound());
     }
 }

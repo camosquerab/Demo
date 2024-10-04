@@ -11,9 +11,7 @@ public class Category {
 
     private String categoryName;
     private String description;
-
-    @Lob
-    private byte[] picture;
+    private String picturePath;
 
     // Getters and Setters
 
@@ -41,11 +39,11 @@ public class Category {
         this.description = description;
     }
 
-    public byte[] getPicture() {
-        return picture;
+    public String getPicturePath() {
+        return picturePath;
     }
 
-    public void setPicture(byte[] picture) {
-        this.picture = picture;
+    public void setPicturePath(String picturePath) {
+        this.picturePath = picturePath;
     }
 }

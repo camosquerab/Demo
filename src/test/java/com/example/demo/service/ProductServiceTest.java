@@ -1,8 +1,8 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.ProductDTO;
 import com.example.demo.entity.Category;
 import com.example.demo.entity.Product;
-import com.example.demo.repository.CategoryRepository;
 import com.example.demo.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,49 +15,71 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class ProductServiceTest {
+public class ProductServiceTest {
+
+    @InjectMocks
+    private ProductService productService;
 
     @Mock
     private ProductRepository productRepository;
 
     @Mock
-    private CategoryRepository categoryRepository;
+    private CategoryService categoryService;
 
-    @InjectMocks
-    private ProductService productService;
+    private ProductDTO productDTO;
+    private Product product;
+    private Category category;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        productDTO = new ProductDTO();
+        productDTO.setProductName("Test Product");
+        productDTO.setSupplierID(1L);
+        productDTO.setCategoryID(1L);
+        productDTO.setUnitPrice(100.0);
+
+        product = new Product();
+        product.setProductName("Test Product");
+
+        category = new Category();
+        category.setCategoryID(1L);
     }
 
     @Test
-    void testCreateProduct_Success() {
-        Category category = new Category();
-        category.setCategoryName("CLOUD");
+    public void testCreateProduct() {
+        when(categoryService.getCategoryById(1L)).thenReturn(category);
+        when(productRepository.save(any(Product.class))).thenReturn(product);
 
-        Product product = new Product();
-        product.setProductName("AWS EC2");
+        Product createdProduct = productService.createProduct(productDTO);
 
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(productRepository.save(product)).thenReturn(product);
-
-        Product createdProduct = productService.createProduct(product, 1L);
-
-        assertEquals("AWS EC2", createdProduct.getProductName());
-        verify(productRepository, times(1)).save(product);
+        assertNotNull(createdProduct);
+        assertEquals("Test Product", createdProduct.getProductName());
+        verify(productRepository, times(1)).save(any(Product.class));
     }
 
     @Test
-    void testGetProductById_Success() {
-        Product product = new Product();
-        product.setProductName("AWS EC2");
+    public void testListProducts() {
+        productService.listProducts();
+        verify(productRepository, times(1)).findAll();
+    }
 
+    @Test
+    public void testGetProductById() {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        Optional<Product> retrievedProduct = productService.getProductById(1L);
 
-        Optional<Product> foundProduct = productService.getProductById(1L);
+        assertTrue(retrievedProduct.isPresent());
+        assertEquals("Test Product", retrievedProduct.get().getProductName());
+        verify(productRepository, times(1)).findById(1L);
+    }
 
-        assertTrue(foundProduct.isPresent());
-        assertEquals("AWS EC2", foundProduct.get().getProductName());
+    @Test
+    public void testGetProductByIdNotFound() {
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+        Optional<Product> retrievedProduct = productService.getProductById(1L);
+
+        assertFalse(retrievedProduct.isPresent());
     }
 }

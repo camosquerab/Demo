@@ -4,9 +4,11 @@ import com.example.demo.dto.CategoryDTO;
 import com.example.demo.entity.Category;
 import com.example.demo.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -16,14 +18,16 @@ public class CategoryController {
     @Autowired
     private CategoryService categoryService;
 
+    @Value("${image.upload.dir}")
+    private String imageUploadDir;
+
     @PostMapping("/")
-    public ResponseEntity<Category> createCategory(@RequestBody CategoryDTO categoryDTO) {
+    public ResponseEntity<Category> createCategory(@ModelAttribute CategoryDTO categoryDTO) {
+
         try {
-            Category category = new Category();
-            category.setCategoryName(categoryDTO.getCategoryName());
-            category.setDescription(categoryDTO.getDescription());
-            category.setPicture(categoryDTO.getPicture());
-            return ResponseEntity.ok(categoryService.createCategory(category));
+            return ResponseEntity.ok(categoryService.createCategory(categoryDTO));
+        } catch (IOException ex) {
+            throw new RuntimeException("Error guardando la imagen", ex);
         } catch (Exception ex) {
             throw new RuntimeException("Error creando la categoría", ex);
         }
@@ -33,4 +37,5 @@ public class CategoryController {
     public ResponseEntity<List<Category>> listCategories() {
         return ResponseEntity.ok(categoryService.listCategories());
     }
+
 }
