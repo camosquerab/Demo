@@ -1,80 +1,64 @@
-package com.example.demo.integration;
 
 import com.example.demo.entity.Category;
 import com.example.demo.entity.Product;
 import com.example.demo.repository.CategoryRepository;
 import com.example.demo.repository.ProductRepository;
-import org.junit.jupiter.api.BeforeEach;
+import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
-public class ProductIntegrationTest {
+@Transactional
+public class IntegrationTest {
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     @Autowired
     private ProductRepository productRepository;
 
     @Autowired
-    private CategoryRepository categoryRepository;
-
-    private Category cloudCategory;
-    private Category serversCategory;
-
-    @BeforeEach
-    void setUp() {
-        cloudCategory = categoryRepository.findByCategoryName("CLOUD")
-                .orElseGet(() -> {
-                    Category newCategory = new Category();
-                    newCategory.setCategoryName("CLOUD");
-                    newCategory.setDescription("Servicios de Nube");
-                    return categoryRepository.save(newCategory);
-                });
-
-        serversCategory = categoryRepository.findByCategoryName("SERVIDORES")
-                .orElseGet(() -> {
-                    Category newCategory = new Category();
-                    newCategory.setCategoryName("SERVIDORES");
-                    newCategory.setDescription("Equipos físicos de servidores");
-                    return categoryRepository.save(newCategory);
-                });
-    }
+    private EntityManager entityManager;
 
     @Test
-    void insert100000ProductsInOneSecond() {
+    public void testCreateCategoriesAndProducts() {
+        long startTime = System.currentTimeMillis();
+
+        // Crear categorías
+        Category category1 = new Category();
+        category1.setCategoryName("SERVIDORES");
+        Category category2 = new Category();
+        category1.setCategoryName("ICLOUD");
+
+        categoryRepository.save(category1);
+        categoryRepository.save(category2);
+
+        // Crear productos
         List<Product> products = new ArrayList<>();
-        Random random = new Random();
-
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 1; i <= 100000; i++) {
             Product product = new Product();
-            product.setProductName("Producto " + i);
-            product.setUnitPrice(random.nextDouble() * 100); // Precio aleatorio
-            product.setQuantityPerUnit("1");
-
-            if (i % 2 == 0) {
-                product.setCategory(cloudCategory);
-            } else {
-                product.setCategory(serversCategory);
-            }
-
+            product.setProductName("Product " + i);
+            product.setCategory((i % 2 == 0) ? category1 : category2);
             products.add(product);
         }
 
-        Instant start = Instant.now();
-
         productRepository.saveAll(products);
+        entityManager.flush(); // Asegúrate de que todos los cambios se escriban en la base de datos
 
-        Instant end = Instant.now();
-        Duration duration = Duration.between(start, end);
+        long endTime = System.currentTimeMillis();
+        long duration = endTime - startTime;
 
-        assertTrue(duration.getSeconds() < 10, "La inserción tomó más de 1 segundo");
+        // Comprobar que la duración sea menor a 10 segundos
+        Assertions.assertTrue(duration < 10000, "La prueba excedió el tiempo límite de 10 segundos");
+
+        // Comprobar que las categorías y los productos se han guardado
+        Assertions.assertEquals(2, categoryRepository.count());
+        Assertions.assertEquals(100000, productRepository.count());
     }
 }
