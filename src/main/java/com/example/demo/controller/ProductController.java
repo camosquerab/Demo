@@ -3,7 +3,6 @@ package com.example.demo.controller;
 import com.example.demo.dto.ProductDTO;
 import com.example.demo.entity.Product;
 import com.example.demo.service.ProductService;
-import jdk.jfr.ContentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,11 +51,7 @@ public class ProductController {
         try {
             Optional<Product> optionalProduct = productService.getProductById(id);
             if (optionalProduct.isPresent()) {
-                Product product = optionalProduct.get(); // Extrae el valor del Optional
-                String imagePath = product.getCategory()
-                        .getPicturePath()
-                        .replace("/app/images/", "/Users/camilomosquerabenavides/Downloads/intcomex/");
-                product.getCategory().setPicturePath(imagePath);
+                Product product = optionalProduct.get();
                 model.addAttribute("product", product);
                 return "productDetail";
             } else {

@@ -27,9 +27,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       JWT_ALGORITHM: ${JWT_ALGORITHM}
-      SPRING_RESOURCES_STATIC_LOCATIONS: "file:/app/images/"
+      SPRING_RESOURCES_STATIC_LOCATIONS: ${SPRING_RESOURCES_STATIC_LOCATIONS}
     volumes:
-      - /Users/camilomosquerabenavides/Downloads/intcomex:/app/images
+      - /home/intcomex:/home/intcomex
     depends_on:
       - db
 
