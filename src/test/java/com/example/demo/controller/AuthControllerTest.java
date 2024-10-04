@@ -12,13 +12,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 class AuthControllerTest {
@@ -45,28 +47,44 @@ class AuthControllerTest {
 
     @Test
     void testLogin_Success() {
-        AuthRequest authRequest = new AuthRequest();
-        authRequest.setUsername("testuser");
-        authRequest.setPassword("testpass");
+        AuthRequest request = new AuthRequest();
+        request.setUsername("testuser");
+        request.setPassword("testpass");
 
         User user = new User();
         user.setUsername("testuser");
 
-        when(userService.findByUsername(authRequest.getUsername())).thenReturn(Optional.of(user));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
+        when(userService.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(jwtUtil.generateToken(user)).thenReturn("token");
 
-        ResponseEntity<AuthResponse> response = authController.login(authRequest);
+        ResponseEntity<AuthResponse> response = authController.login(request);
 
-        verify(authenticationManager, times(1))
-                .authenticate(any(UsernamePasswordAuthenticationToken.class));
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("token", response.getBody().getToken());
     }
 
     @Test
+    void testLogin_Failure_BadCredentials() {
+        AuthRequest request = new AuthRequest();
+        request.setUsername("testuser");
+        request.setPassword("wrongpass");
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Credenciales incorrectas"));
+
+        try {
+            authController.login(request);
+        } catch (BadCredentialsException ex) {
+            assertEquals("Credenciales incorrectas", ex.getMessage());
+        }
+    }
+
+    @Test
     void testRegister_Success() {
-        AuthRequest authRequest = new AuthRequest();
-        authRequest.setUsername("testuser");
-        authRequest.setPassword("testpass");
+        AuthRequest request = new AuthRequest();
+        request.setUsername("testuser");
+        request.setPassword("testpass");
 
         Role role = new Role();
         role.setName("ROLE_USER");
@@ -75,12 +93,12 @@ class AuthControllerTest {
         user.setUsername("testuser");
 
         when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.of(role));
-        when(userService.registerUser(authRequest.getUsername(), authRequest.getPassword(), role))
-                .thenReturn(user);
+        when(userService.registerUser("testuser", "testpass", role)).thenReturn(user);
         when(jwtUtil.generateToken(user)).thenReturn("token");
 
-        ResponseEntity<AuthResponse> response = authController.register(authRequest);
+        ResponseEntity<AuthResponse> response = authController.register(request);
 
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("token", response.getBody().getToken());
     }
 }

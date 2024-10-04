@@ -10,7 +10,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,28 +31,48 @@ class CategoryControllerTest {
     @Test
     void testCreateCategory_Success() {
         CategoryDTO categoryDTO = new CategoryDTO();
-        categoryDTO.setCategoryName("CLOUD");
+        categoryDTO.setCategoryName("SERVIDORES");
+        categoryDTO.setDescription("Descripción de la categoría");
+        categoryDTO.setPicture(new byte[]{});
 
         Category category = new Category();
-        category.setCategoryName("CLOUD");
+        category.setCategoryName("SERVIDORES");
 
         when(categoryService.createCategory(any(Category.class))).thenReturn(category);
 
         ResponseEntity<Category> response = categoryController.createCategory(categoryDTO);
 
-        assertEquals("CLOUD", response.getBody().getCategoryName());
+        assertEquals("SERVIDORES", response.getBody().getCategoryName());
         verify(categoryService, times(1)).createCategory(any(Category.class));
+    }
+
+    @Test
+    void testCreateCategory_Failure() {
+        // Datos de entrada
+        CategoryDTO categoryDTO = new CategoryDTO();
+        categoryDTO.setCategoryName("SERVIDORES");
+        categoryDTO.setDescription("Descripción de la categoría");
+
+        // Simulación de excepción
+        when(categoryService.createCategory(any(Category.class))).thenThrow(new RuntimeException("Error creando la categoría"));
+
+        // Ejecución del método del controlador con verificación de excepción
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            categoryController.createCategory(categoryDTO);
+        });
+
+        assertEquals("Error creando la categoría", exception.getMessage());
     }
 
     @Test
     void testListCategories_Success() {
         Category category1 = new Category();
-        category1.setCategoryName("CLOUD");
+        category1.setCategoryName("SERVIDORES");
 
         Category category2 = new Category();
-        category2.setCategoryName("SERVIDORES");
+        category2.setCategoryName("CLOUD");
 
-        when(categoryService.listCategories()).thenReturn(Arrays.asList(category1, category2));
+        when(categoryService.listCategories()).thenReturn(List.of(category1, category2));
 
         ResponseEntity<List<Category>> response = categoryController.listCategories();
 

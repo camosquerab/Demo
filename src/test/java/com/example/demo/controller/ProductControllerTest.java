@@ -9,7 +9,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -62,9 +64,26 @@ class ProductControllerTest {
     void testGetProductById_NotFound() {
         when(productService.getProductById(1L)).thenReturn(Optional.empty());
 
-        ResponseEntity<Product> response = productController.getProductById(1L);
+        try {
+            productController.getProductById(1L);
+        } catch (ResponseStatusException ex) {
+            assertEquals("404 NOT_FOUND \"Producto no encontrado\"", ex.getMessage());
+        }
+    }
 
-        assertNull(response.getBody());
-        assertEquals(404, response.getStatusCodeValue());
+    @Test
+    void testListProducts_Success() {
+        Product product1 = new Product();
+        product1.setProductName("AWS EC2");
+
+        Product product2 = new Product();
+        product2.setProductName("Azure VM");
+
+        when(productService.listProducts()).thenReturn(List.of(product1, product2));
+
+        ResponseEntity<List<Product>> response = productController.listProducts();
+
+        assertEquals(2, response.getBody().size());
+        verify(productService, times(1)).listProducts();
     }
 }

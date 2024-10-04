@@ -14,7 +14,6 @@ public class ProductDTO {
 
     // Getters and Setters
 
-
     public String getProductName() {
         return productName;
     }

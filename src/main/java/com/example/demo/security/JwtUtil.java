@@ -67,7 +67,21 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
     public Key getKey() {
         return key;
+    }
+
+    public void setJwtExpirationInMs(Long jwtExpirationInMs) {
+        this.jwtExpirationInMs = jwtExpirationInMs;
+    }
+
+    public void setSecret(String secret) {
+        this.secret = secret;
+        this.init(); // Re-inicializa la clave con el nuevo secreto
+    }
+
+    public void setJwtAlgorithm(String jwtAlgorithm) {
+        this.jwtAlgorithm = jwtAlgorithm;
     }
 }

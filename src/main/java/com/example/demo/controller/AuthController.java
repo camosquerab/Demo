@@ -11,8 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -35,18 +38,23 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-        User user = userService.findByUsername(request.getUsername()).orElseThrow();
-        String token = jwtUtil.generateToken(user);
-        return ResponseEntity.ok(new AuthResponse(token));
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+            User user = userService.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new BadCredentialsException("Usuario o contraseña incorrectos"));
+            String token = jwtUtil.generateToken(user);
+            return ResponseEntity.ok(new AuthResponse(token));
+        } catch (AuthenticationException ex) {
+            throw new BadCredentialsException("Credenciales incorrectas", ex);
+        }
     }
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@RequestBody AuthRequest request) {
         Optional<Role> roleOpt = roleRepository.findByName("ROLE_USER");
-        if(roleOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        if (roleOpt.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "No se encontró el rol USER");
         }
         Role role = roleOpt.get();
         User user = userService.registerUser(request.getUsername(), request.getPassword(), role);
