@@ -36,12 +36,9 @@ class CategoryControllerTest {
         CategoryDTO categoryDTO = new CategoryDTO();
         MockMultipartFile file = new MockMultipartFile("file", "test.jpg", "image/jpeg", new byte[0]);
         categoryDTO.setPicture(file);
-
         Category category = new Category();
         when(categoryService.createCategory(categoryDTO)).thenReturn(category);
-
         ResponseEntity<Category> response = categoryController.createCategory(categoryDTO);
-
         assertEquals(200, response.getStatusCodeValue());
         assertNotNull(response.getBody());
         verify(categoryService, times(1)).createCategory(any(CategoryDTO.class));
@@ -51,19 +48,16 @@ class CategoryControllerTest {
     void testCreateCategoryThrowsIOException() throws IOException {
         CategoryDTO categoryDTO = new CategoryDTO();
         when(categoryService.createCategory(categoryDTO)).thenThrow(new IOException("Error"));
-
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> categoryController.createCategory(categoryDTO));
-
-        assertEquals("Error saving the image", exception.getMessage());
+        RuntimeException exception = assertThrows
+                (RuntimeException.class, () -> categoryController.createCategory(categoryDTO));
+        assertEquals("Error guardando la imagen", exception.getMessage());
     }
 
     @Test
     void testListCategories() {
         List<Category> categories = Arrays.asList(new Category(), new Category());
         when(categoryService.listCategories()).thenReturn(categories);
-
         ResponseEntity<List<Category>> response = categoryController.listCategories();
-
         assertEquals(200, response.getStatusCodeValue());
         assertEquals(2, response.getBody().size());
         verify(categoryService, times(1)).listCategories();

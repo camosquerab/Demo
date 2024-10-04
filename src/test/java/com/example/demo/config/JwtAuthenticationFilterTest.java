@@ -13,8 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.StringUtils;
-
 import java.io.IOException;
 import java.util.Optional;
 

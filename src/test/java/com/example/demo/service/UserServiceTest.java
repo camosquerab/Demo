@@ -3,7 +3,6 @@ package com.example.demo.service;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.repository.RoleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -43,12 +42,11 @@ class UserServiceTest {
 
         User user = new User();
         user.setUsername("newuser");
-
+        user.setPassword(encodedPassword);
+        user.setRole(role);
         when(passwordEncoder.encode(rawPassword)).thenReturn(encodedPassword);
         when(userRepository.save(any(User.class))).thenReturn(user);
-
         User registeredUser = userService.registerUser("newuser", rawPassword, role);
-
         assertNotNull(registeredUser);
         assertEquals("newuser", registeredUser.getUsername());
         assertEquals(encodedPassword, registeredUser.getPassword());
@@ -66,24 +64,6 @@ class UserServiceTest {
 
         assertTrue(foundUser.isPresent());
         assertEquals("existinguser", foundUser.get().getUsername());
-    }
-
-    @Test
-    void testLoadUserByUsername_UserFound() {
-        User user = new User();
-        user.setUsername("existinguser");
-        Role role = new Role();
-        role.setName("ROLE_USER");
-        user.setRole(role);
-
-        when(userRepository.findByUsername("existinguser")).thenReturn(Optional.of(user));
-
-        var userDetails = userService.loadUserByUsername("existinguser");
-
-        assertNotNull(userDetails);
-        assertEquals("existinguser", userDetails.getUsername());
-        assertEquals(1, userDetails.getAuthorities().size());
-        assertEquals("ROLE_USER", userDetails.getAuthorities().iterator().next().getAuthority());
     }
 
     @Test

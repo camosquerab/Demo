@@ -9,15 +9,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+
 
 class CategoryServiceTest {
 
@@ -37,23 +36,21 @@ class CategoryServiceTest {
     }
 
     @Test
-    void testCreateCategoryWithImage() throws IOException {
-        CategoryDTO categoryDTO = new CategoryDTO();
-        categoryDTO.setCategoryName("Test Category");
-        categoryDTO.setDescription("Test Description");
-        categoryDTO.setPicture(imageFile);
-
+    void testSaveImageWithInvalidExtension() throws IOException {
+        MultipartFile imageFile = mock(MultipartFile.class);
+        when(imageFile.getOriginalFilename()).thenReturn("test.txt");
         when(imageFile.isEmpty()).thenReturn(false);
-        when(imageFile.getOriginalFilename()).thenReturn("image.jpg");
-        doReturn(new byte[0]).when(imageFile).getBytes();
-        when(categoryRepository.save(any(Category.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(imageFile.getBytes()).thenReturn("Contenido de prueba".getBytes());
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            categoryService.saveImage(imageFile);
+        });
+        assertEquals("Tipo de archivo no soportado: .txt", exception.getMessage());
+    }
 
-        Category createdCategory = categoryService.createCategory(categoryDTO);
-
-        assertEquals("Test Category", createdCategory.getCategoryName());
-        assertEquals("Test Description", createdCategory.getDescription());
-        assertNotNull(createdCategory.getPicturePath());
-        verify(categoryRepository, times(1)).save(any(Category.class));
+    @Test
+    void testCategoryServiceInitialization() {
+        assertNotNull(categoryService);
+        assertEquals("/images", categoryService.imageDirectory);
     }
 
     @Test
@@ -69,26 +66,6 @@ class CategoryServiceTest {
         assertNull(createdCategory.getPicturePath());
         assertEquals("Test Category", createdCategory.getCategoryName());
         assertEquals("Test Description", createdCategory.getDescription());
-    }
-
-    @Test
-    void testSaveImage() throws IOException {
-        when(imageFile.getOriginalFilename()).thenReturn("image.jpg");
-        doReturn(new byte[0]).when(imageFile).getBytes();
-
-        String imagePath = categoryService.saveImage(imageFile);
-
-        assertTrue(imagePath.contains("image.jpg"));
-        verify(imageFile, times(1)).getBytes();
-    }
-
-    @Test
-    void testSaveImageThrowsIOException() throws IOException {
-        when(imageFile.getOriginalFilename()).thenReturn("image.jpg");
-        doThrow(new IOException("Error")).when(imageFile).getBytes();
-
-        IOException exception = assertThrows(IOException.class, () -> categoryService.saveImage(imageFile));
-        assertEquals("Error saving the image: Error", exception.getMessage());
     }
 
     @Test

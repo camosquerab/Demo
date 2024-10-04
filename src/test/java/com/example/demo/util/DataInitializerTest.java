@@ -4,54 +4,56 @@ import com.example.demo.entity.Role;
 import com.example.demo.repository.RoleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.TestPropertySource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest
-@TestPropertySource(locations = "classpath:application-test.properties")
-public class DataInitializerTest {
+class DataInitializerTest {
 
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private ApplicationContext applicationContext;
-
+    @InjectMocks
     private DataInitializer dataInitializer;
 
+    @Mock
+    private RoleRepository roleRepository;
+
     @BeforeEach
-    public void setUp() {
-        roleRepository.deleteAll(); // Clear the repository before each test
-        dataInitializer = applicationContext.getBean(DataInitializer.class);
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testRoleInitialization() throws Exception {
-        // Act: run the DataInitializer
+    void testRunWithExistingRoles() throws Exception {
+        when(roleRepository.existsByName("ROLE_ADMIN")).thenReturn(true);
+        when(roleRepository.existsByName("ROLE_USER")).thenReturn(true);
         dataInitializer.run();
-
-        // Assert: check that the roles are created
-        assertThat(roleRepository.count()).isEqualTo(2);
-        assertThat(roleRepository.existsByName("ROLE_ADMIN")).isTrue();
-        assertThat(roleRepository.existsByName("ROLE_USER")).isTrue();
+        verify(roleRepository, never()).save(any(Role.class));
     }
 
     @Test
-    public void testRoleInitialization_WhenRolesExist() throws Exception {
-        // Arrange: set up existing roles
-        Role roleAdmin = new Role();
-        roleAdmin.setName("ROLE_ADMIN");
-        roleRepository.save(roleAdmin);
-
-        // Act: run the DataInitializer
+    void testRunWithAdminRoleNotExists() throws Exception {
+        when(roleRepository.existsByName("ROLE_ADMIN")).thenReturn(false);
+        when(roleRepository.existsByName("ROLE_USER")).thenReturn(true);
         dataInitializer.run();
+        verify(roleRepository).save(argThat(role -> "ROLE_ADMIN".equals(role.getName())));
+    }
 
-        // Assert: check that only one role is created
-        assertThat(roleRepository.count()).isEqualTo(2); // ROLE_ADMIN and ROLE_USER should be present
+    @Test
+    void testRunWithUserRoleNotExists() throws Exception {
+        when(roleRepository.existsByName("ROLE_ADMIN")).thenReturn(true);
+        when(roleRepository.existsByName("ROLE_USER")).thenReturn(false);
+        dataInitializer.run();
+        verify(roleRepository).save(argThat(role -> "ROLE_USER".equals(role.getName())));
+    }
+
+    @Test
+    void testRunWithNoRolesExist() throws Exception {
+        when(roleRepository.existsByName("ROLE_ADMIN")).thenReturn(false);
+        when(roleRepository.existsByName("ROLE_USER")).thenReturn(false);
+        dataInitializer.run();
+        verify(roleRepository).save(argThat(role -> "ROLE_ADMIN".equals(role.getName())));
+        verify(roleRepository).save(argThat(role -> "ROLE_USER".equals(role.getName())));
     }
 }

@@ -4,12 +4,12 @@ import com.example.demo.entity.Product;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-
+import org.springframework.test.context.TestPropertySource;
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
+@TestPropertySource(locations = "classpath:application-test.properties")
 public class ProductRepositoryTest {
 
     @Autowired
@@ -20,7 +20,6 @@ public class ProductRepositoryTest {
         Product product = new Product();
         product.setProductName("Test Product");
         Product savedProduct = productRepository.save(product);
-
         assertNotNull(savedProduct);
         assertNotNull(savedProduct.getProductID());
         assertEquals("Test Product", savedProduct.getProductName());
@@ -31,9 +30,7 @@ public class ProductRepositoryTest {
         Product product = new Product();
         product.setProductName("Test Product");
         Product savedProduct = productRepository.save(product);
-
         Optional<Product> retrievedProduct = productRepository.findById(savedProduct.getProductID());
-
         assertTrue(retrievedProduct.isPresent());
         assertEquals("Test Product", retrievedProduct.get().getProductName());
     }

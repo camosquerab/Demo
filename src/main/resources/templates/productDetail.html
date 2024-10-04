@@ -9,9 +9,7 @@
     <p>Precio: <span th:text="${product.unitPrice}"></span></p>
     <p>Cantidad en Stock: <span th:text="${product.unitsInStock}"></span></p>
 
-    <!-- Mostrar la imagen -->
     <img th:src="@{{imageName}(imageName=${product.category.picturePath})}" alt="Imagen del Producto" />
     <img src="/Users/camilomosquerabenavides/Downloads/intcomex/1728238762270_Unknown.jpeg" alt="Imagen del Producto">
-<!-- Agregar más detalles del producto si es necesario -->
 </body>
 </html>

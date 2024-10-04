@@ -7,14 +7,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
-
-import static java.lang.String.format;
+import java.util.UUID;
 
 @Service
 public class CategoryService {
@@ -42,15 +41,27 @@ public class CategoryService {
     }
 
     String saveImage(MultipartFile imageFile) throws IOException {
+        if (imageFile == null || imageFile.isEmpty()) {
+            return null;
+        }
+
         String originalFilename = imageFile.getOriginalFilename();
-        String newFileName = format("%s_%s", System.currentTimeMillis(),originalFilename);
+        assert originalFilename != null;
+
+        String extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+        List<String> validExtensions = Arrays.asList(".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp");
+
+        if (!validExtensions.contains(extension)) {
+            throw new IllegalArgumentException("Tipo de archivo no soportado: " + extension);
+        }
+
+        String newFileName = String.format("%s_%s%s", System.currentTimeMillis(), UUID.randomUUID(), extension);
         Path imagePath = Paths.get(imageDirectory, newFileName);
         Files.createDirectories(imagePath.getParent());
 
         try {
             Files.write(imagePath, imageFile.getBytes());
         } catch (IOException e) {
-            e.printStackTrace();
             throw new IOException("Error al guardar la imagen: " + e.getMessage());
         }
 

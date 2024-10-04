@@ -31,7 +31,6 @@ class AppConfigTest {
     void addCorsMappingsTest() {
         CorsRegistry registry = new CorsRegistry();
         appConfig.addCorsMappings(registry);
-        // Assuming that CorsRegistry will have the expected mapping after method execution
         assertNotNull(registry);
     }
 }

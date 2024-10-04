@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
@@ -52,15 +51,11 @@ class AuthControllerTest {
         AuthRequest request = new AuthRequest();
         request.setUsername("testuser");
         request.setPassword("password");
-
         User user = new User();
         user.setUsername("testuser");
-
         when(userService.findByUsername("testuser")).thenReturn(Optional.of(user));
         when(jwtUtil.generateToken(user)).thenReturn("test-token");
-
         ResponseEntity<AuthResponse> response = authController.login(request);
-
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("test-token", response.getBody().getToken());
@@ -71,15 +66,12 @@ class AuthControllerTest {
         AuthRequest request = new AuthRequest();
         request.setUsername("testuser");
         request.setPassword("wrongpassword");
-
         doThrow(new BadCredentialsException("Credenciales incorrectas"))
                 .when(authenticationManager)
                 .authenticate(any(UsernamePasswordAuthenticationToken.class));
-
         BadCredentialsException thrown = assertThrows(BadCredentialsException.class, () -> {
             authController.login(request);
         });
-
         assertEquals("Credenciales incorrectas", thrown.getMessage());
     }
 
@@ -98,9 +90,7 @@ class AuthControllerTest {
         when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.of(role));
         when(userService.registerUser("newuser", "password", role)).thenReturn(user);
         when(jwtUtil.generateToken(user)).thenReturn("new-token");
-
         ResponseEntity<AuthResponse> response = authController.register(request);
-
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals("new-token", response.getBody().getToken());

@@ -13,7 +13,7 @@ import java.util.Date;
 public class JwtUtil {
 
     @Value("${jwt.secret}")
-    private String secret; // Base64-encoded key
+    private String secret;
 
     @Value("${jwt.expiration}")
     private Long jwtExpirationInMs;
@@ -55,12 +55,12 @@ public class JwtUtil {
         return (username.equals(user.getUsername()) && !isTokenExpired(token));
     }
 
-    private boolean isTokenExpired(String token) {
+    boolean isTokenExpired(String token) {
         Date expiration = parseClaims(token).getExpiration();
         return expiration.before(new Date());
     }
 
-    private Claims parseClaims(String token) {
+    Claims parseClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
@@ -78,7 +78,7 @@ public class JwtUtil {
 
     public void setSecret(String secret) {
         this.secret = secret;
-        this.init(); // Re-inicializa la clave con el nuevo secreto
+        this.init();
     }
 
     public void setJwtAlgorithm(String jwtAlgorithm) {

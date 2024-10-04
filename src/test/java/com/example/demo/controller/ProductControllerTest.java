@@ -5,84 +5,92 @@ import com.example.demo.entity.Product;
 import com.example.demo.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Optional;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@WebMvcTest(ProductController.class)
-public class ProductControllerTest {
+class ProductControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @InjectMocks
+    private ProductController productController;
 
-    @MockBean
+    @Mock
     private ProductService productService;
 
-    private Product product;
-    private ProductDTO productDTO;
-
     @BeforeEach
-    public void setUp() {
-        productDTO = new ProductDTO();
-        productDTO.setProductName("Test Product");
-        productDTO.setSupplierID(1L);
-        productDTO.setCategoryID(1L);
-        productDTO.setUnitPrice(100.0);
-
-        product = new Product();
-        product.setProductID(1L);
-        product.setProductName("Test Product");
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testCreateProductSuccess() throws Exception {
+    void testCreateProduct() {
+        ProductDTO productDTO = new ProductDTO();
+        Product product = new Product();
         when(productService.createProduct(any(ProductDTO.class))).thenReturn(product);
-
-        mockMvc.perform(post("/product/")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"productName\":\"Test Product\", \"supplierID\":1, \"categoryID\":1, \"unitPrice\":100.0}")
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.productName").value("Test Product"));
+        ResponseEntity<Product> response = productController.createProduct(productDTO);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(product, response.getBody());
     }
 
     @Test
-    public void testListProducts() throws Exception {
-        List<Product> productList = Arrays.asList(product);
-        when(productService.listProducts()).thenReturn(productList);
-
-        mockMvc.perform(get("/product/products/"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].productName").value("Test Product"));
+    void testListProducts() {
+        List<Product> products = new ArrayList<>();
+        when(productService.listProducts()).thenReturn(products);
+        ResponseEntity<List<Product>> response = productController.listProducts();
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(products, response.getBody());
     }
 
     @Test
-    public void testGetProductByIdSuccess() throws Exception {
-        when(productService.getProductById(1L)).thenReturn(Optional.of(product));
-
-        mockMvc.perform(get("/product/productss/1/"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.productName").value("Test Product"));
+    void testGetProductById1Found() {
+        Long productId = 1L;
+        Product product = new Product();
+        when(productService.getProductById(productId)).thenReturn(Optional.of(product));
+        ResponseEntity<Product> response = productController.getProductById1(productId);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(product, response.getBody());
     }
 
     @Test
-    public void testGetProductByIdNotFound() throws Exception {
-        when(productService.getProductById(1L)).thenReturn(Optional.empty());
+    void testGetProductById1NotFound() {
+        Long productId = 1L;
+        when(productService.getProductById(productId)).thenReturn(Optional.empty());
+        Exception exception = assertThrows(ResponseStatusException.class, () -> {
+            productController.getProductById1(productId);
+        });
+        assertEquals("404 NOT_FOUND \"Producto no encontrado\"", exception.getMessage());
+    }
 
-        mockMvc.perform(get("/product/productss/1/"))
-                .andExpect(status().isNotFound());
+    @Test
+    void testGetProductByIdFound() {
+        Long productId = 1L;
+        Product product = new Product();
+        when(productService.getProductById(productId)).thenReturn(Optional.of(product));
+        Model model = mock(Model.class);
+        String viewName = productController.getProductById(productId, model);
+        verify(model).addAttribute("product", product);
+        assertEquals("productDetail", viewName);
+    }
+
+    @Test
+    void testGetProductByIdNotFound() {
+        Long productId = 1L;
+        when(productService.getProductById(productId)).thenReturn(Optional.empty());
+        Model model = mock(Model.class);
+        Exception exception = assertThrows(ResponseStatusException.class, () -> {
+            productController.getProductById(productId, model);
+        });
+        assertEquals("404 NOT_FOUND \"Producto no encontrado\"", exception.getMessage());
     }
 }

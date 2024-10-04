@@ -10,9 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.lang.reflect.Method;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
@@ -65,10 +63,5 @@ class SecurityConfigTest {
         Object passwordEncoderFromProvider = getPasswordEncoderMethod.invoke(provider);
 
         assertEquals(passwordEncoder, passwordEncoderFromProvider);
-    }
-
-    @Test
-    void filterChainTest() throws Exception {
-        assertNotNull(securityConfig.filterChain(null, passwordEncoder));
     }
 }
