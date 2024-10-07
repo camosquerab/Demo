@@ -15,61 +15,112 @@ Antes de ejecutar el proyecto, asegúrate de tener los siguientes requisitos ins
 
 ---
 
-## **Configuración de la base de datos**
+## Descripción General
+Esta API está diseñada para gestionar productos y categorías. Requiere autenticación de usuario utilizando tokens JWT.
 
-Configura una base de datos PostgreSQL y ajusta las siguientes propiedades en el archivo `application.properties` para conectarte a la base de datos:
+## URL Base
+Reemplaza `{{base_url}}` con la URL base real de tu API, por ejemplo, `http://localhost:8080`.
 
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/intcomex
-spring.datasource.username=root
-spring.datasource.password=root
+---
+
+## Registro de Usuario
+
+Primero, crea un usuario con el rol de **ROLE_ADMIN**.
+
+### Registrar Usuario
+**Método:** `POST`  
+**Endpoint:** `{{base_url}}/auth/register`
+
+### Cuerpo de la Solicitud
+```json
+{
+    "username": "newadmin",
+    "password": "newpassword",
+    "role": "ROLE_ADMIN"
+}
 ```
+## Registro de Usuario
+
+Primero, crea un usuario con el rol de **ROLE_ADMIN**.
+
+### Registrar Usuario
+**Método:** `POST`  
+**Endpoint:** `{{base_url}}/auth/register`
+
+### Cuerpo de la Solicitud
+```json
+{
+    "username": "newadmin",
+    "password": "newpassword",
+    "role": "ROLE_ADMIN"
+}
+```
+### Inicio de Sesión
+
+**Método:** `POST`  
+**Endpoint:** `{{base_url}}/auth/login`
+
+### Cuerpo de la Solicitud
+```json
+{
+    "username": "newadmin",
+    "password": "newpassword"
+}
+```
+### Crear Categoría
+
+Una vez que tengas el token, puedes crear una categoría.
+
+**Método:** `POST`  
+**Endpoint:** `{{base_url}}/category/`
+
+### Cuerpo de la Solicitud
+```json
+{
+    "categoryName": "SERVERS1",
+    "description": "Hardware servers for various applications",
+    "picture": "FILE"
+}
+```
+### Crear Producto
+
+Luego, puedes crear un producto asociado a una categoría.
+
+**Método:** `POST`  
+**Endpoint:** `{{base_url}}/product/`
+
+### Cuerpo de la Solicitud
+```json
+{
+    "productName": "Dell PowerEdge R740",
+    "supplierID": 1001,
+    "categoryID": 1,
+    "quantityPerUnit": "1 unit",
+    "unitPrice": 2500.00,
+    "unitsInStock": 10,
+    "unitsOnOrder": 5,
+    "reorderLevel": 3,
+    "discontinued": false
+}
+```
+### Buscar Producto por ID
+
+Para buscar un producto específico, puedes usar el ID del producto.
+
+- **Método:** `GET`  
+- **Endpoint:** `{{base_url}}/product/products/1/`
 
 ---
 
+### Lista de Productos
 
-## Configura el usuario y la contraseña:
-	•	Usuario: root
-	•	Contraseña: root
-Puedes cambiar estas credenciales según tu configuración y actualizar el archivo application.properties en consecuencia.
+Si deseas obtener la lista de todos los productos, utiliza el siguiente endpoint.
+
+- **Método:** `GET`  
+- **Endpoint:** `{{base_url}}/product/products/`
 
 ---
 
+### Notas
 
-## Colección de Postman
-
-Para facilitar las pruebas de la API, se incluye un archivo de colección de Postman que contiene ejemplos de solicitudes POST y GET para los diferentes endpoints.
-
-Ubicación del archivo Postman
-
-El archivo de la colección de Postman está ubicado en la raíz del proyecto como postman_collection.json.
-
-Importar el archivo en Postman
-
-	1.	Abre Postman.
-	2.	Haz clic en Importar en la esquina superior izquierda.
-	3.	Selecciona el archivo postman_collection.json ubicado en la raíz del proyecto.
-	4.	Una vez importado, podrás ejecutar las solicitudes disponibles, como el registro, login, creación de productos, categorías, etc.
-
-Variables en Postman
-
-	•	{{base_url}}: La URL base de la API (http://localhost:8080).
-	•	{{token}}: El token JWT que se obtiene tras hacer login. Debes copiar este token y configurarlo en las variables de entorno de Postman para realizar solicitudes que requieran autenticación.
-
-Endpoints de la API
-
-Autenticación
-
-	•	POST /auth/register - Registro de nuevos usuarios.
-	•	POST /auth/login - Autenticación y generación de token JWT.
-
-Categorías
-
-	•	POST /Category/ - Crear una nueva categoría.
-	•	GET /Category/ - Listar todas las categorías.
-
-Productos
-
-	•	POST /Product/ - Crear un nuevo producto.
-	•	GET /Products/ - Listar todos los productos.
-	•	GET /Products/{id}/ - Obtener un producto por su ID.
+Para las últimas cuatro solicitudes (Crear Categoría, Crear Producto, Buscar Producto por ID y Lista de Productos), asegúrate de incluir el token Bearer en el encabezado de la solicitud para autenticarte.
