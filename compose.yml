@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:14
@@ -29,8 +27,7 @@ services:
       JWT_ALGORITHM: ${JWT_ALGORITHM}
       SPRING_RESOURCES_STATIC_LOCATIONS: ${SPRING_RESOURCES_STATIC_LOCATIONS}
     volumes:
-      #- /home/intcomex:/home/intcomex
-      - /Users/camilomosquerabenavides/Downloads/intcomex:/home/intcomex
+      - /home/intcomex:/home/intcomex
     depends_on:
       - db
 

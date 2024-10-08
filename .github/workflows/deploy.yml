@@ -1,0 +1,36 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main  # Solo se activará cuando haya un push a la rama "main"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Copy project to EC2
+        run: |
+          scp -i ~/.ssh/intcomex-demo.pem -r . ec2-user@35.94.147.137:/home/ec2-user/intcomex
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: SSH into EC2 and Build Docker Images
+        run: |
+          ssh -i ~/.ssh/intcomex-demo.pem ec2-user@35.94.147.137 'cd /home/ec2-user/intcomex && docker-compose build'
+
+      - name: Deploy Green Version
+        run: |
+          ssh -i ~/.ssh/intcomex-demo.pem ec2-user@35.94.147.137 'cd /home/ec2-user/intcomex && docker-compose up -d app-green'
